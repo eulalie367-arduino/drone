@@ -23,7 +23,7 @@ def create_control_packet(
     
     Format: [HEADER, ROLL, PITCH, THROTTLE, YAW, FLAGS, CHECKSUM, FOOTER]
     - Bytes 1-5 (Roll-Flags) are standard 0-255 values (128 = neutral for R/P/Y).
-    - Checksum is XOR of bytes 1 (Header) through 6 (Flags).
+    - Checksum is XOR of bytes 0 (Header) through 5 (Flags).
     """
     # Ensure values are within 1-byte range (0-255)
     roll = max(0, min(255, roll))
@@ -34,7 +34,7 @@ def create_control_packet(
     
     packet_data = [HEADER, roll, pitch, throttle, yaw, flags]
     
-    # Calculate XOR checksum of bytes 0 through 5 (Index 1-6 in 1-based)
+    # Calculate XOR checksum of bytes 0 through 5
     checksum = 0
     for b in packet_data:
         checksum ^= b

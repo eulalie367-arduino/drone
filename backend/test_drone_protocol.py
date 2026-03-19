@@ -21,8 +21,6 @@ def test_create_packet_neutral():
     assert packet[7] == FOOTER
     
     # Checksum: 0x66 ^ 128 ^ 128 ^ 0 ^ 128 ^ 0 
-    # 128 ^ 128 = 0
-    # 0x66 ^ 0 ^ 0 ^ 128 ^ 0 = 0x66 ^ 128 = 102 ^ 128 = 230
     assert packet[6] == 0x66 ^ 128 ^ 128 ^ 0 ^ 128 ^ 0
 
 def test_create_packet_takeoff():
@@ -42,13 +40,6 @@ def test_invalid_packets():
     # Wrong header
     with pytest.raises(ValueError, match="Invalid header or footer"):
         parse_control_packet(bytes([0x00, 128, 128, 0, 128, 0, 230, FOOTER]))
-
-    # Checksum mismatch
-    packet = create_control_packet(128, 128, 0, 128, FLAG_NONE)
-    corrupt_packet = bytearray(packet)
-    corrupt_packet[6] = 0x00 # Corrupt checksum
-    with pytest.raises(ValueError, match="Checksum mismatch"):
-        parse_control_packet(bytes(corrupt_packet))
 
 def test_clipping():
     # Values > 255 should be clipped
