@@ -2,7 +2,7 @@ import pytest
 import time
 from fastapi.testclient import TestClient
 from .main import app, drone
-from .drone_protocol import FLAG_LAND
+from .drone_protocol import FLAG_EMERGENCY, FLAG_LAND, FLAG_TAKEOFF
 
 def test_get_status():
     client = TestClient(app)
@@ -31,3 +31,35 @@ def test_heartbeat_safety_timeout():
         time.sleep(1.2)
         
         assert drone.flags == FLAG_LAND
+
+
+def test_api_connect():
+    client = TestClient(app)
+    response = client.post("/api/connect")
+    assert response.status_code == 200
+    assert response.json()["status"] == "connected"
+
+
+def test_api_takeoff():
+    drone.update_controls(128, 128, 0, 128)
+    client = TestClient(app)
+    response = client.post("/api/takeoff")
+    assert response.status_code == 200
+    assert response.json()["status"] == "takeoff"
+    assert drone.flags == FLAG_TAKEOFF
+
+
+def test_api_land():
+    client = TestClient(app)
+    response = client.post("/api/land")
+    assert response.status_code == 200
+    assert response.json()["status"] == "landing"
+    assert drone.flags == FLAG_LAND
+
+
+def test_api_emergency():
+    client = TestClient(app)
+    response = client.post("/api/emergency")
+    assert response.status_code == 200
+    assert response.json()["status"] == "emergency_stop"
+    assert drone.flags == FLAG_EMERGENCY

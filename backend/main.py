@@ -6,7 +6,13 @@ from contextlib import asynccontextmanager
 
 from .drone_connection import DroneConnection
 from .video_stream import VideoStream
-from .drone_protocol import FLAG_LAND, FLAG_NONE
+from .drone_protocol import (
+    FLAG_EMERGENCY,
+    FLAG_LAND,
+    FLAG_NONE,
+    FLAG_TAKEOFF,
+    STICK_NEUTRAL,
+)
 
 # Shared drone instances
 drone = DroneConnection()
@@ -27,6 +33,30 @@ app = FastAPI(lifespan=lifespan)
 @app.get("/status")
 async def get_status():
     return {"status": "online", "drone_ip": drone.drone_ip}
+
+
+@app.post("/api/connect")
+async def api_connect():
+    await drone.connect()
+    return {"status": "connected", "drone_ip": drone.drone_ip}
+
+
+@app.post("/api/takeoff")
+async def api_takeoff():
+    drone.update_controls(STICK_NEUTRAL, STICK_NEUTRAL, 0, STICK_NEUTRAL, FLAG_TAKEOFF)
+    return {"status": "takeoff"}
+
+
+@app.post("/api/land")
+async def api_land():
+    drone.update_controls(STICK_NEUTRAL, STICK_NEUTRAL, 0, STICK_NEUTRAL, FLAG_LAND)
+    return {"status": "landing"}
+
+
+@app.post("/api/emergency")
+async def api_emergency():
+    drone.update_controls(STICK_NEUTRAL, STICK_NEUTRAL, 0, STICK_NEUTRAL, FLAG_EMERGENCY)
+    return {"status": "emergency_stop"}
 
 @app.websocket("/ws/control")
 async def websocket_control(websocket: WebSocket):
