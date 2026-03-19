@@ -1,26 +1,23 @@
 import pytest
-from httpx import ASGITransport, AsyncClient
+from fastapi.testclient import TestClient
+from .main import app, drone
 
-from backend.main import app
+def test_get_status():
+    client = TestClient(app)
+    response = client.get("/status")
+    assert response.status_code == 200
+    assert response.json()["status"] == "online"
 
-
-@pytest.fixture
-async def client():
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as c:
-        yield c
-
-
-@pytest.mark.asyncio
-async def test_health(client):
-    resp = await client.get("/api/health")
-    assert resp.status_code == 200
-    body = resp.json()
-    assert body["status"] == "ok"
-    assert "version" in body
-
-
-@pytest.mark.asyncio
-async def test_health_returns_version(client):
-    resp = await client.get("/api/health")
-    assert resp.json()["version"] == "0.1.0"
+def test_control_update():
+    client = TestClient(app)
+    with client.websocket_connect("/ws/control") as websocket:
+        # Initial state (set in main.py)
+        assert drone.roll == 128
+        
+        # Send update
+        websocket.send_text('{"roll": 200, "pitch": 50, "throttle": 10, "yaw": 128}')
+        
+        # Give it a tiny bit of time
+        assert drone.roll == 200
+        assert drone.pitch == 50
+        assert drone.throttle == 10
