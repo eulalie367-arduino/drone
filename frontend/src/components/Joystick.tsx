@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from 'react';
-import nipplejs, { NippleData } from 'nipplejs';
+import { useEffect, useRef } from 'react';
+import nipplejs, { type NippleData } from 'nipplejs';
 
 interface JoystickProps {
     side: 'left' | 'right';
