@@ -253,6 +253,40 @@ body, html {
 .corner.bl { bottom: 20px; left: 20px; border-right: none; border-top: none; }
 .corner.br { bottom: 20px; right: 20px; border-left: none; border-top: none; }
 
+/* Keyboard reference overlay */
+.keybinds-overlay {
+    position: fixed;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 16px;
+    padding: 6px 16px;
+    background: rgba(10, 11, 30, 0.7);
+    border: 1px solid rgba(0, 242, 255, 0.2);
+    border-radius: 6px;
+    font-size: 11px;
+    color: rgba(0, 242, 255, 0.7);
+    z-index: 20;
+    backdrop-filter: blur(4px);
+}
+
+.keybind {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.keybind kbd {
+    display: inline-block;
+    padding: 1px 5px;
+    border: 1px solid rgba(0, 242, 255, 0.4);
+    border-radius: 3px;
+    font-family: inherit;
+    font-size: 10px;
+    background: rgba(0, 242, 255, 0.1);
+}
+
 @keyframes pulse {
     0% { opacity: 0.5; }
     50% { opacity: 1; }
