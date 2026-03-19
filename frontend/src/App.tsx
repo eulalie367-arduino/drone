@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import './App.css';
 import VideoFeed from './components/VideoFeed';
 import Joystick from './components/Joystick';
 import HUD from './components/HUD';
+import { useDrone } from './DroneContext';
 
 const FLAG_TAKEOFF = 0x01;
 const FLAG_LAND = 0x02;
@@ -10,32 +11,19 @@ const FLAG_EMERGENCY = 0x04;
 const FLAG_GYRO_CAL = 0x08;
 
 function App() {
-    const [status, setStatus] = useState('Standby');
+    const { controlState, sendControl } = useDrone();
     const controls = useRef({ roll: 128, pitch: 128, throttle: 0, yaw: 128, flags: 0 });
 
+    // 20Hz heartbeat — send current controls via context
     useEffect(() => {
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const newWs = new WebSocket(`${protocol}//${window.location.hostname}:8000/ws/control`);
-
-        newWs.onopen = () => setStatus('Connected');
-        newWs.onclose = () => setStatus('Offline');
-
-        // Send heartbeat at 20Hz
         const interval = setInterval(() => {
-            if (newWs.readyState === WebSocket.OPEN) {
-                newWs.send(JSON.stringify(controls.current));
-                // Clear one-time flags (takeoff/land) after sending
-                if (controls.current.flags !== 0) {
-                    controls.current.flags = 0;
-                }
+            sendControl(controls.current);
+            if (controls.current.flags !== 0) {
+                controls.current.flags = 0;
             }
         }, 50);
-
-        return () => {
-            clearInterval(interval);
-            newWs.close();
-        };
-    }, []);
+        return () => clearInterval(interval);
+    }, [sendControl]);
 
     const handleLeftMove = useCallback((data: { x: number; y: number }) => {
         controls.current.yaw = Math.round(128 + data.x * 127);
@@ -72,7 +60,7 @@ function App() {
 
             if (e.key === ' ') {
                 e.preventDefault();
-                sendFlag(status === 'Flying' ? FLAG_LAND : FLAG_TAKEOFF);
+                sendFlag(controlState === 'connected' ? FLAG_LAND : FLAG_TAKEOFF);
             }
             if (e.key === 'Escape') {
                 e.preventDefault();
@@ -115,12 +103,16 @@ function App() {
             window.removeEventListener('keydown', onKeyDown);
             window.removeEventListener('keyup', onKeyUp);
         };
-    }, [status]);
+    }, [controlState]);
+
+    const statusLabel =
+        controlState === 'connected' ? 'Connected' :
+        controlState === 'connecting' ? 'Connecting...' : 'Offline';
 
     return (
         <div className="app-container">
             <VideoFeed />
-            <HUD battery={84} wifi={92} status={status} altitude={1.2} />
+            <HUD battery={84} wifi={92} status={statusLabel} altitude={1.2} />
 
             <div className="ui-overlay">
                 <div className="side-panel left">
