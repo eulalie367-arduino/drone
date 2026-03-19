@@ -1,0 +1,260 @@
+:root {
+    --bg-deep: #0a0b1e;
+    --neon-cyan: #00f2ff;
+    --neon-pink: #ff0055;
+    --glass-bg: rgba(0, 242, 255, 0.05);
+    --glass-border: rgba(0, 242, 255, 0.2);
+    --text-glow: 0 0 10px rgba(0, 242, 255, 0.5);
+}
+
+body, html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--bg-deep);
+    color: var(--neon-cyan);
+    font-family: 'Courier New', Courier, monospace;
+    overflow: hidden;
+}
+
+.app-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Video Feed Styles */
+.video-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    background: #000;
+}
+
+.video-canvas {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: brightness(0.8) contrast(1.2) hue-rotate(-10deg);
+}
+
+.video-container .overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2rem;
+    letter-spacing: 0.5rem;
+    text-shadow: var(--text-glow);
+    animation: pulse 2s infinite;
+}
+
+.video-stats {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.8rem;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 5px 15px;
+    border-radius: 15px;
+}
+
+/* HUD Styles */
+.hud-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.hud-top {
+    display: flex;
+    justify-content: space-between;
+    padding: 20px 40px;
+}
+
+.hud-item {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    padding: 5px 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    backdrop-filter: blur(5px);
+}
+
+.hud-item.status .status-text {
+    font-weight: bold;
+    color: var(--neon-cyan);
+    text-shadow: var(--text-glow);
+}
+
+.bar-container {
+    width: 100px;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--glass-border);
+}
+
+.bar {
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+.hud-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.crosshair {
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--neon-cyan);
+    border-radius: 50%;
+    position: relative;
+}
+
+.crosshair::before, .crosshair::after {
+    content: '';
+    position: absolute;
+    background: var(--neon-cyan);
+}
+
+.crosshair::before { width: 100%; height: 1px; top: 50%; left: 0; }
+.crosshair::after { height: 100%; width: 1px; left: 50%; top: 0; }
+
+.hud-side.left {
+    position: absolute;
+    left: 40px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.altitude-gauge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    padding: 20px 10px;
+}
+
+/* UI Overlay / Joysticks */
+.ui-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 300px;
+    z-index: 20;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 50px;
+    pointer-events: none;
+}
+
+.side-panel {
+    pointer-events: auto;
+    width: 200px;
+    height: 200px;
+    position: relative;
+}
+
+.joystick-wrapper {
+    width: 100%;
+    height: 100%;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 50%;
+    position: relative;
+}
+
+.joystick-label {
+    position: absolute;
+    bottom: -30px;
+    width: 100%;
+    text-align: center;
+    font-size: 0.7rem;
+    opacity: 0.7;
+}
+
+.center-actions {
+    pointer-events: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.btn.neon {
+    background: var(--glass-bg);
+    border: 1px solid var(--neon-cyan);
+    color: var(--neon-cyan);
+    padding: 10px 25px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.3s;
+    backdrop-filter: blur(5px);
+}
+
+.btn.neon:hover {
+    background: rgba(0, 242, 255, 0.2);
+    box-shadow: 0 0 15px var(--neon-cyan);
+}
+
+.btn.neon.emergency {
+    border-color: var(--neon-pink);
+    color: var(--neon-pink);
+}
+
+.btn.neon.emergency:hover {
+    box-shadow: 0 0 15px var(--neon-pink);
+}
+
+/* Effects */
+.scanlines {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        rgba(18, 16, 16, 0) 50%,
+        rgba(0, 0, 0, 0.1) 50%
+    );
+    background-size: 100% 4px;
+    z-index: 30;
+    pointer-events: none;
+    opacity: 0.3;
+}
+
+.hud-corners .corner {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    border: 2px solid var(--neon-cyan);
+    z-index: 15;
+}
+
+.corner.tl { top: 20px; left: 20px; border-right: none; border-bottom: none; }
+.corner.tr { top: 20px; right: 20px; border-left: none; border-bottom: none; }
+.corner.bl { bottom: 20px; left: 20px; border-right: none; border-top: none; }
+.corner.br { bottom: 20px; right: 20px; border-left: none; border-top: none; }
+
+@keyframes pulse {
+    0% { opacity: 0.5; }
+    50% { opacity: 1; }
+    100% { opacity: 0.5; }
+}
