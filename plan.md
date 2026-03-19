@@ -61,7 +61,7 @@ unified-drone-commander/
 3.  **Verification (With Drone):** Connect to `X69DRONE_xxxxxx`, test motor unlock/takeoff, and verify video latency.
 
 ## 5. Verification Checklist
-- [ ] Backend generates valid XOR checksums for UDP packets.
-- [ ] MJPEG header parsing correctly extracts JPEG start of image (`0xFFD8`).
-- [ ] UI maintains 60fps while rendering video and joystick state.
-- [ ] Safety timeout triggers "Land" after 1s of lost communication.
+- [x] Backend generates valid XOR checksums for UDP packets.
+- [x] MJPEG header parsing correctly extracts JPEG start of image (`0xFFD8`).
+- [x] UI maintains 60fps while rendering video and joystick state.
+- [x] Safety timeout triggers "Land" after 1s of lost communication.
