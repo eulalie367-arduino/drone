@@ -3,9 +3,20 @@ import type { ReactNode } from 'react';
 
 type ConnectionState = 'disconnected' | 'connecting' | 'connected';
 
+interface TelemetryData {
+    battery: number;
+    wifi: number;
+    altitude: number;
+    flight_mode: number;
+}
+
+const DEFAULT_TELEMETRY: TelemetryData = { battery: 0, wifi: 0, altitude: 0, flight_mode: 0 };
+
 interface DroneContextValue {
     controlState: ConnectionState;
     videoState: ConnectionState;
+    telemetryState: ConnectionState;
+    telemetry: TelemetryData;
     sendControl: (data: Record<string, number>) => void;
     onVideoFrame: (handler: (data: Blob) => void) => () => void;
 }
@@ -62,6 +73,8 @@ function createReconnectingWs(
 export function DroneProvider({ children }: { children: ReactNode }) {
     const [controlState, setControlState] = useState<ConnectionState>('disconnected');
     const [videoState, setVideoState] = useState<ConnectionState>('disconnected');
+    const [telemetryState, setTelemetryState] = useState<ConnectionState>('disconnected');
+    const [telemetry, setTelemetry] = useState<TelemetryData>(DEFAULT_TELEMETRY);
     const controlWsRef = useRef<{ getWs: () => WebSocket | null; cleanup: () => void } | null>(null);
     const videoHandlerRef = useRef<((data: Blob) => void) | null>(null);
 
@@ -90,9 +103,25 @@ export function DroneProvider({ children }: { children: ReactNode }) {
             'blob',
         );
 
+        setTelemetryState('connecting');
+        const telemetryConn = createReconnectingWs(
+            `${base}/ws/telemetry`,
+            () => setTelemetryState('connected'),
+            () => setTelemetryState('disconnected'),
+            (e) => {
+                try {
+                    const data = JSON.parse(e.data as string) as TelemetryData;
+                    setTelemetry(data);
+                } catch {
+                    // malformed payload — ignore
+                }
+            },
+        );
+
         return () => {
             controlWsRef.current?.cleanup();
             videoConn.cleanup();
+            telemetryConn.cleanup();
         };
     }, []);
 
@@ -111,7 +140,7 @@ export function DroneProvider({ children }: { children: ReactNode }) {
     };
 
     return (
-        <DroneContext.Provider value={{ controlState, videoState, sendControl, onVideoFrame }}>
+        <DroneContext.Provider value={{ controlState, videoState, telemetryState, telemetry, sendControl, onVideoFrame }}>
             {children}
         </DroneContext.Provider>
     );

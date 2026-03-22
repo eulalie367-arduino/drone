@@ -11,7 +11,7 @@ const FLAG_EMERGENCY = 0x04;
 const FLAG_GYRO_CAL = 0x08;
 
 function App() {
-    const { controlState, sendControl } = useDrone();
+    const { controlState, sendControl, telemetry } = useDrone();
     const controls = useRef({ roll: 128, pitch: 128, throttle: 0, yaw: 128, flags: 0 });
 
     // 20Hz heartbeat — send current controls via context
@@ -112,7 +112,7 @@ function App() {
     return (
         <div className="app-container">
             <VideoFeed />
-            <HUD battery={84} wifi={92} status={statusLabel} altitude={1.2} />
+            <HUD battery={telemetry.battery} wifi={telemetry.wifi} status={statusLabel} altitude={telemetry.altitude} />
 
             <div className="ui-overlay">
                 <div className="side-panel left">

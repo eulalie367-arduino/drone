@@ -1,38 +1,69 @@
 import asyncio
 import json
 import time
+from dataclasses import dataclass, asdict
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from contextlib import asynccontextmanager
 
 from .drone_connection import DroneConnection
 from .video_stream import VideoStream
+from .telemetry_receiver import TelemetryReceiver
 from .drone_protocol import (
     FLAG_EMERGENCY,
     FLAG_LAND,
     FLAG_NONE,
     FLAG_TAKEOFF,
     STICK_NEUTRAL,
+    TelemetryPacket,
 )
+
+
+@dataclass
+class TelemetryState:
+    battery: int = 0
+    wifi: int = 0
+    altitude: float = 0.0
+    flight_mode: int = 0
+
 
 # Shared drone instances
 drone = DroneConnection()
 video = VideoStream()
+telemetry = TelemetryReceiver()
+telemetry_state = TelemetryState()
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup: Connect to drone and start video listener
     await drone.connect()
     await video.start()
+
+    async def _on_telemetry(packet: TelemetryPacket) -> None:
+        telemetry_state.battery = packet.battery
+        telemetry_state.wifi = packet.wifi
+        telemetry_state.altitude = packet.altitude
+        telemetry_state.flight_mode = packet.flight_mode
+
+    telemetry.on_telemetry = _on_telemetry
+    await telemetry.start()
+
     yield
-    # Shutdown: Clean up resources
+
     await drone.disconnect()
     await video.stop()
+    await telemetry.stop()
 
 app = FastAPI(lifespan=lifespan)
+
 
 @app.get("/status")
 async def get_status():
     return {"status": "online", "drone_ip": drone.drone_ip}
+
+
+@app.get("/api/telemetry")
+async def get_telemetry():
+    return asdict(telemetry_state)
 
 
 @app.post("/api/connect")
@@ -94,6 +125,19 @@ async def websocket_control(websocket: WebSocket):
         print(f"Control WS Error: {e}")
     finally:
         monitor_task.cancel()
+
+@app.websocket("/ws/telemetry")
+async def websocket_telemetry(websocket: WebSocket):
+    await websocket.accept()
+    try:
+        while True:
+            await asyncio.sleep(0.5)  # 2Hz push
+            await websocket.send_json(asdict(telemetry_state))
+    except WebSocketDisconnect:
+        pass
+    except Exception as e:
+        print(f"Telemetry WS Error: {e}")
+
 
 @app.websocket("/ws/video")
 async def websocket_video(websocket: WebSocket):

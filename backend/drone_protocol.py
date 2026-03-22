@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import Tuple
 
 # Protocol Constants
@@ -112,3 +113,38 @@ def build_handshake_packet() -> bytes:
 def build_video_init_packet() -> bytes:
     """Video init packet sent to PORT_VIDEO to start MJPEG stream."""
     return bytes([0xEF, 0x00, 0x04, 0x00])
+
+
+@dataclass
+class TelemetryPacket:
+    battery: int      # 0–100 %
+    wifi: int         # 0–100 %
+    altitude: float   # metres
+    flight_mode: int  # raw flags byte
+
+
+def parse_telemetry_packet(data: bytes) -> TelemetryPacket:
+    """
+    Parse an E58/Lewei ~10-byte UDP status packet from the X69 drone.
+
+    Known layout:
+      [0]  header byte
+      [1]  battery level  (0–100 raw)
+      [2]  wifi/link strength (0–100 raw)
+      [3]  flight mode flags
+      [4]  altitude high byte
+      [5]  altitude low byte  ((high<<8|low) / 10.0 metres)
+
+    Raises ValueError for packets shorter than 6 bytes.
+    """
+    if len(data) < 6:
+        raise ValueError(f"Telemetry packet too short: {len(data)} bytes")
+
+    battery  = max(0, min(100, data[1]))
+    wifi     = max(0, min(100, data[2])) if len(data) > 2 else 0
+    mode     = data[3] if len(data) > 3 else 0
+    alt_raw  = ((data[4] << 8) | data[5]) if len(data) > 5 else 0
+    altitude = round(alt_raw / 10.0, 1)
+
+    return TelemetryPacket(battery=battery, wifi=wifi,
+                           altitude=altitude, flight_mode=mode)
